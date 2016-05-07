@@ -14,18 +14,16 @@ runtime: shiny
 
 <br/><br/>
 
-### Summary
+### Goal
+The goal of this project was to scrape professor ratings from ratemyprofessor.com from both Duke and UNC to see if there are any interesting patterns both within and between the school across the numerous departments.
 
-We got json files from ratemyprofessor
-Our goal was to find interesting trends
-looked at Duke and UNC
-
+We chose to Duke because as students, we thought this would be interesting to parse. Furthermore, we wanted to do a comparison with our rival, UNC, just for fun. Fortunately, both schools have over 1000 professors with ratings each, which allowed for great analyses.
 <br/>
 
 
-#### Data Collection
+#### Scrape
 
-summarize here
+We were able to produce JSON files for the ratemyprofessor pages that included numerous key variables such as department and rating. Since the JSON was in a predictable pattern we only scraped the variables of interest and compiled them into neat data frames for both Duke and UNC. 
 
 ```{r}
 library(rvest)
@@ -97,9 +95,9 @@ school_data$UNC[school_data$UNC$dept == "Piano", ]$dept <- "Music"
 
 ### Data manipulation
 
-average rating per department
-multiply overall rating by number of ratings to get total rating, then divide by total number of ratings
-the trend is
+The first thing we did was find the average rating per department. We accomplished this by multiply overall rating per professor by the number of unique ratings the professor got to get the total rating. This accounted for the popularity of individual professors. Then, we divided by total number of ratings across recieved across the department to recieve the department average rating.
+
+Within Duke, we noted that many STEM fields had lower deparment rating, and the higher rated departments tended to by in the humanities and social sciences. At UNC, the trend seemed to be consistent. 
 
 ```{r}
 
@@ -122,8 +120,7 @@ unc_dept_avg<-sort(unlist(unc_dept_avg),decreasing=TRUE)
 unc_dept_avg
 ```
 
-number of ratings per department
-the trend is  
+Next, we looked at the number of ratings per department. For both schools it seemed like the more popular departments recieved more reviews. For example, while math isn't the most popular major at Duke, many students across numerous departments have math requirements for their degrees, which explaines why it has so many reviews. Moreover, the number of reviews likely impacted the department ratings we found in the last part. For example, the Jewish Studies department only had 3 total reviews all of which were 5 out of 5. Interestingly, the most reviewed department at UNC was english, which may be related to their own undergraduate requirements.
 
 ```{r}
 duke_num_ratings <- lapply(unique(school_data$Duke$dept), 
@@ -141,8 +138,8 @@ unc_num_ratings <- sort(unlist(unc_num_ratings),decreasing=TRUE)
 unc_num_ratings
 ```
 
-Find number of ratings per rating class
-the trend is that students tend to give more ratings to the "better" professors
+Next, we found number of ratings per rating class. The rating class, as provided by ratemyprofessor, were good, average and poor.
+The trend is that students tend to give more ratings to the "better" professors, indicating those professors that gave a strong impression were more likely to produce students who voluntarily took the time to give them reviews. We were surprised that the poor performing professors didn't have as many reviews as we had assumed strong emotions toward a professor, in either direction, would've driven up the number of reviews.
 
 ```{r}
 duke_class_num <- lapply(unique(school_data$Duke$rating_class), 
@@ -161,8 +158,8 @@ unc_class_num
 
 ```
 
-out of the professors with at least 30 ratings, sort by best rated
-looks like best rated profs at Duke are STEM classes and best rated profs at UNC are history/humanities
+Here, out of the professors with at least 30 ratings, we looked at the top ten best rated professors at each school. We set a threshold for a minimum number of ratings so that we could compile a list of professors who have generated a lot of student interest. We also took this as a signal that the rating was more likely to be reliable. 
+It looks like best rated professors at Duke are in STEM fields and the best rated professors at UNC are in history & humanities. The duke result is surprising given the low average department ratings for many of the STEm fields. This could indicate that these department have a handful of superstar professors whose ratings are being dragged down by a larger population of mediocre to poor professors.
 
 ```{r}
 valid_duke_profs <- school_data$Duke[school_data$Duke$num_rating >= 30, ]
@@ -171,8 +168,7 @@ valid_duke_profs[order(-valid_duke_profs[,6]), ][1:10,]
 valid_unc_profs[order(-valid_unc_profs[,6]), ][1:10,]
 ```
 
-what is the most common first name of professors lol
-top 10 are basically the same for each school
+Just for fun, we wanted to see what are the most common first name of professors at Duke and UNC. They were basically all names from the bible. 
 
 ```{r}
 dukenames<-count(school_data$Duke, 'first_name')
@@ -182,7 +178,7 @@ uncnames[order(-uncnames[,2]), ][1:10,]
 ```
 
 ### Testing
-make some comparisons between Duke and UNC with tests or just comparing the above
+Lastly, we wanted to make some comparisons between Duke and UNC with statistical tests. We did this with both the mean rating and the number of ratings. While there wasn't significant different average rating, we did find a significant different the average number of reviews each professor recieved in each school. At a 5% significance level, the average number of ratings per professor at Duke was significantly higher than the average number of ratings per professor at UNC (p = .001942). It seems that while students are equally satisfied with the level of instruction at both universities, Duke students are more proactive in rating and reflecting on the value of their instructors.
 
 ```{r}
 t.test(school_data$Duke$overall_rating, school_data$UNC$overall_rating)
